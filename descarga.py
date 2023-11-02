@@ -4,6 +4,7 @@ import glob
 import json
 import pandas as pd
 from dotenv import load_dotenv
+from merge import merge
 
 # URLs
 load_dotenv()
@@ -57,3 +58,5 @@ for file in dir_files:
         ruta_completa = os.path.join(dir, file)
         os.remove(ruta_completa)
         print(f"Archivo {file} eliminado correctamente.")
+
+merge()
