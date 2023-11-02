@@ -18,3 +18,15 @@ for file in glob.glob(os.path.join('.','*.xlsx')):
 with pd.ExcelWriter(archivo_destino, engine='openpyxl') as writer:
     for sheet_name, df in dfs.items():
         df.to_excel(writer, sheet_name=sheet_name, startrow=8, index=False)
+        print(f"Merge {sheet_name} en {archivo_destino} completado correctamente.")
+
+#delete other excels
+dir = os.getcwd()
+
+dir_files = os.listdir(dir)
+
+for file in dir_files:
+    if file.endswith(".xlsx") and file != archivo_destino:
+        ruta_completa = os.path.join(dir, file)
+        os.remove(ruta_completa)
+        print(f"Archivo {file} eliminado correctamente.")
