@@ -3,7 +3,6 @@ import os
 import glob
 import json
 import pandas as pd
-from xlsxwriter.workbook import Workbook
 from dotenv import load_dotenv
 
 # URLs
