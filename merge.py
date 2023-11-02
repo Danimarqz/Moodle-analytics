@@ -1,6 +1,8 @@
 import openpyxl
 import os
 
+# TODO: Use pandas.
+
 dir = os.getcwd()
 dir_files = os.listdir(dir)
 archivo_destino = 'Informe completo teleformación (octubre).xlsx'
