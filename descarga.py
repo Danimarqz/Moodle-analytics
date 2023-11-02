@@ -31,7 +31,7 @@ def descarga_informe(login, file_link, file_name):
 
         with open(file_name, 'wb') as file:
             file.write(file_response.content)
-
+        # save as dataframe?
         print('File downloaded successfully.')
         session.close()
 
@@ -43,6 +43,7 @@ for csvfile in glob.glob(os.path.join('.','*.csv')):
     try:
         df = pd.read_csv(csvfile, encoding='utf8')
         df.to_excel(csvfile[:-4] +'.xlsx', index=False)
+        #merge from this df?
     except Exception as e:
         print(f"Error processing {csvfile}: {e}")
 
