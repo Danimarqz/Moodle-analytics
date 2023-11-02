@@ -1,30 +1,20 @@
-import openpyxl
+import glob
 import os
+import pandas as pd
 
-# TODO: Use pandas.
+archivo_destino = 'Informe completo.xlsx'
 
-dir = os.getcwd()
-dir_files = os.listdir(dir)
-archivo_destino = 'Informe completo teleformación (octubre).xlsx'
+dfs = {}
 
-# Cargar el archivo de destino
-libro_destino = openpyxl.load_workbook(archivo_destino)
-hoja_destino = libro_destino.active
+for file in glob.glob(os.path.join('.','*.xlsx')):
+    if file != archivo_destino:
+        sheet_name = os.path.basename(file).split('/')[-1].split('.')[0]
+        df = pd.read_excel(file, engine="openpyxl")
+        dfs[sheet_name] = df
 
-# Iterar sobre los archivos en el directorio
-for file in dir_files:
-    if file.endswith('.xlsx') and file != archivo_destino:
-        # Obtener el nombre de la hoja (eliminar extensión .xlsx)
-        hoja_nombre = os.path.splitext(file)[0]
-        # Cargar el archivo de origen
-        libro_origen = openpyxl.load_workbook(file, data_only=True)
-        # Obtener la primera hoja del archivo de origen
-        hoja_origen = libro_origen.active
-        print(libro_destino[hoja_nombre])
-        # Copiar datos de la hoja de origen a la hoja de destino con el mismo nombre
-        for row in hoja_origen.iter_rows(min_row=9, values_only=True):
-            hoja_destino = libro_destino[hoja_nombre]
-            hoja_destino.append(row)
+#TODO filter df - enddate > today
+# summarize data in the first 8 rows
 
-# Guardar el archivo de destino con los datos copiados
-libro_destino.save(archivo_destino)
+with pd.ExcelWriter(archivo_destino, engine='openpyxl') as writer:
+    for sheet_name, df in dfs.items():
+        df.to_excel(writer, sheet_name=sheet_name, startrow=8, index=False)
