@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 import os
 import glob
@@ -10,6 +11,8 @@ from merge import merge
 load_dotenv()
 with open('campus.json') as f:
     dict = json.load(f)
+
+dfs = []
 username = os.getenv('CAMPUS_USERNAME')
 password = os.getenv('CAMPUS_PASSWORD')
 
@@ -32,7 +35,6 @@ def descarga_informe(login, file_link, file_name):
 
         with open(file_name, 'wb') as file:
             file.write(file_response.content)
-        # save as dataframe?
         print('File downloaded successfully.')
         session.close()
 
@@ -43,8 +45,44 @@ for key in dict:
 for csvfile in glob.glob(os.path.join('.','*.csv')):
     try:
         df = pd.read_csv(csvfile, encoding='utf8')
-        df.to_excel(csvfile[:-4] +'.xlsx', index=False)
-        #merge from this df?
+        if 'Fecha fin' in df.columns:
+            df['Fecha fin'] = pd.to_datetime(df['Fecha fin'], format='%d/%m/%Y', errors='coerce')
+            today = datetime.now().date()
+            valid_date_mask = ~df['Fecha fin'].isna() & (df['Fecha fin'].dt.date >= today)
+            filtered_df = df[valid_date_mask]
+            filtered_df['Fecha fin'] = filtered_df['Fecha fin'].dt.strftime('%d/%m/%Y')
+
+            calculations = {
+                'Text1': 'Total matriculados',
+                'Calculation1' : filtered_df['Apellido'].sum(),
+                'Text2': 'Iniciados',
+                'Iniciados': ((filtered_df['Tiempo total de dedicación'] == '00h 00m 00s') | ~filtered_df['Tiempo total de dedicación'].isna()).sum(),
+                'Text3' : 'Pendientes de inicio',
+                'NoIniciados' : ((filtered_df['Tiempo dedicación Scorms'] == '00h 00m 00s') | ~filtered_df['Tiempo dedicación Scorms'].isna()).sum(),
+                'Text4' : 'Finalizados',
+                'Finalizados' : (filtered_df['Nota Examen final'] > 0).sum(),
+                'Text5' : 'No finalizados',
+                'NoFinalizados': (filtered_df['Nota Examen final'] > 0).sum() - (((filtered_df['Tiempo total de dedicación'] == '00h 00m 00s') | ~filtered_df['Tiempo total de dedicación'].isna()).sum())
+            }
+            percentages = {
+                '1':'',
+                '2':'',
+                'Porcentaje Iniciados / Total Matriculados': (calculations['Iniciados'] / calculations['Total matriculados']) * 100 if calculations['Total matriculados'] != 0 else 0,
+                '3':'',
+                'Porcentaje Pendientes de inicio / Iniciados': (calculations['NoIniciados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
+                '4':'',
+                'Porcentaje Finalizados / Iniciados': (calculations['Finalizados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
+                '5':'',
+                'Porcentaje NoFinalizados / Iniciados': (calculations['NoFinalizados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
+            }
+            
+            calculations_df = pd.DataFrame([calculations])
+            percentages_df = pd.DataFrame([percentages])
+
+            filtered_df = pd.concat([calculations_df, percentages_df], ignore_index=True)
+            dfs.append(filtered_df)
+        else:
+            dfs.append(df)
     except Exception as e:
         print(f"Error processing {csvfile}: {e}")
 
@@ -59,4 +97,4 @@ for file in dir_files:
         os.remove(ruta_completa)
         print(f"Archivo {file} eliminado correctamente.")
 
-merge()
+merge(dfs, dict.keys())
