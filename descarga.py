@@ -12,7 +12,7 @@ load_dotenv()
 with open('campus.json') as f:
     dict = json.load(f)
 
-dfs = []
+dfs = {}
 username = os.getenv('CAMPUS_USERNAME')
 password = os.getenv('CAMPUS_PASSWORD')
 
@@ -50,39 +50,44 @@ for csvfile in glob.glob(os.path.join('.','*.csv')):
             today = datetime.now().date()
             valid_date_mask = ~df['Fecha fin'].isna() & (df['Fecha fin'].dt.date >= today)
             filtered_df = df[valid_date_mask]
-            filtered_df['Fecha fin'] = filtered_df['Fecha fin'].dt.strftime('%d/%m/%Y')
-
-            calculations = {
-                'Text1': 'Total matriculados',
-                'Calculation1' : filtered_df['Apellido'].sum(),
-                'Text2': 'Iniciados',
-                'Iniciados': ((filtered_df['Tiempo total de dedicación'] == '00h 00m 00s') | ~filtered_df['Tiempo total de dedicación'].isna()).sum(),
-                'Text3' : 'Pendientes de inicio',
-                'NoIniciados' : ((filtered_df['Tiempo dedicación Scorms'] == '00h 00m 00s') | ~filtered_df['Tiempo dedicación Scorms'].isna()).sum(),
-                'Text4' : 'Finalizados',
-                'Finalizados' : (filtered_df['Nota Examen final'] > 0).sum(),
-                'Text5' : 'No finalizados',
-                'NoFinalizados': (filtered_df['Nota Examen final'] > 0).sum() - (((filtered_df['Tiempo total de dedicación'] == '00h 00m 00s') | ~filtered_df['Tiempo total de dedicación'].isna()).sum())
-            }
-            percentages = {
-                '1':'',
-                '2':'',
-                'Porcentaje Iniciados / Total Matriculados': (calculations['Iniciados'] / calculations['Total matriculados']) * 100 if calculations['Total matriculados'] != 0 else 0,
-                '3':'',
-                'Porcentaje Pendientes de inicio / Iniciados': (calculations['NoIniciados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
-                '4':'',
-                'Porcentaje Finalizados / Iniciados': (calculations['Finalizados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
-                '5':'',
-                'Porcentaje NoFinalizados / Iniciados': (calculations['NoFinalizados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
-            }
+            filtered_df.loc[:,'Fecha fin'] = filtered_df['Fecha fin'].dt.strftime('%d/%m/%Y')
+            filtered_df.loc[:,'Nota Examen final'] = filtered_df['Nota Examen final'].str.replace('%', '').astype(float)
+            print(f"{csvfile}, {filtered_df['DNI'].count()}")
+            print(f"{csvfile}, {filtered_df['Fecha fin'].count()}")
+            print(f"{csvfile}, {filtered_df}")
+            name = os.path.splitext(os.path.basename(csvfile))[0]
+            # calculations = {
+            #     'Text1': 'Total matriculados',
+            #     'Calculation1' : filtered_df['DNI'].count(),
+            #     'Text2': 'Iniciados',
+            #     'Iniciados': ((filtered_df['Tiempo total de dedicación'] == '00h 00m 00s') | ~filtered_df['Tiempo total de dedicación'].isna()).count(),
+            #     'Text3' : 'Pendientes de inicio',
+            #     'NoIniciados' : ((filtered_df['Tiempo dedicación Scorms'] == '00h 00m 00s') | ~filtered_df['Tiempo dedicación Scorms'].isna()).count(),
+            #     'Text4' : 'Finalizados',
+            #     'Finalizados' : (filtered_df['Nota Examen final'] > 0).count(),
+            #     'Text5' : 'No finalizados',
+            #     'NoFinalizados': (filtered_df['Nota Examen final'] > 0).count() - (((filtered_df['Tiempo total de dedicación'] == '00h 00m 00s') | ~filtered_df['Tiempo total de dedicación'].isna()).count())
+            # }
+            # percentages = {
+            #     '1':'',
+            #     '2':'',
+            #     'Porcentaje Iniciados / Total Matriculados': (calculations['Iniciados'] / calculations['Total matriculados']) * 100 if calculations['Total matriculados'] != 0 else 0,
+            #     '3':'',
+            #     'Porcentaje Pendientes de inicio / Iniciados': (calculations['NoIniciados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
+            #     '4':'',
+            #     'Porcentaje Finalizados / Iniciados': (calculations['Finalizados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
+            #     '5':'',
+            #     'Porcentaje NoFinalizados / Iniciados': (calculations['NoFinalizados'] / calculations['Iniciados']) * 100 if calculations['Iniciados'] != 0 else 0,
+            # }
             
-            calculations_df = pd.DataFrame([calculations])
-            percentages_df = pd.DataFrame([percentages])
+            # calculations_df = pd.DataFrame([calculations])
+            # percentages_df = pd.DataFrame([percentages])
 
-            filtered_df = pd.concat([calculations_df, percentages_df], ignore_index=True)
-            dfs.append(filtered_df)
+            # filtered_df = pd.concat([calculations_df, percentages_df], ignore_index=True)
+            dfs[name] = filtered_df
         else:
-            dfs.append(df)
+            name = os.path.splitext(os.path.basename(csvfile))[0]
+            dfs[name] = df
     except Exception as e:
         print(f"Error processing {csvfile}: {e}")
 
@@ -97,4 +102,4 @@ for file in dir_files:
         os.remove(ruta_completa)
         print(f"Archivo {file} eliminado correctamente.")
 
-merge(dfs, dict.keys())
+merge(dfs)
