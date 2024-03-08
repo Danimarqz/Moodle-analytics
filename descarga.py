@@ -9,7 +9,7 @@ from merge import merge
 
 # URLs
 load_dotenv()
-with open('campus.json') as f:
+with open('onlysavia.json') as f:
     dict = json.load(f)
 
 dfs = {}
