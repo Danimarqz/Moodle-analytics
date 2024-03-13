@@ -14,15 +14,21 @@ with open('campus.json') as f:
 
 dfs = {}
 username = os.getenv('CAMPUS_USERNAME')
+username_d = os.getenv('CAMPUS_USERNAME_D')
 password = os.getenv('CAMPUS_PASSWORD')
+password_d = os.getenv('CAMPUS_PASSWORD_D')
 
 login_payload = {
     'username': username,
     'password': password,
 }
-def descarga_informe(login, file_link, file_name):
+login_payload_d = {
+    'username': username_d,
+    'password': password_d,
+}
+def descarga_informe(login, file_link, file_name, login_info):
     session = requests.Session()
-    login_response = session.post(login, data=login_payload)
+    login_response = session.post(login, data=login_info)
 
     if 'Invalid login' in login_response.text:
         print('Login failed. Invalid username or password.')
@@ -39,7 +45,7 @@ def descarga_informe(login, file_link, file_name):
         session.close()
 
 for key in dict:
-    descarga_informe(dict[key]['login'], dict[key]['file'], dict[key]['output'])
+    descarga_informe(dict[key]['login'], dict[key]['file'], dict[key]['output'], login_payload)
 
 #csv a xlsx
 for csvfile in glob.glob(os.path.join('.','*.csv')):
