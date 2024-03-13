@@ -12,11 +12,15 @@ load_dotenv()
 with open('campus.json') as f:
     dict = json.load(f)
 
+with open('cursosdv.json') as fd:
+    dict_dv = json.load(fd)
+
 dfs = {}
 username = os.getenv('CAMPUS_USERNAME')
 username_d = os.getenv('CAMPUS_USERNAME_D')
 password = os.getenv('CAMPUS_PASSWORD')
 password_d = os.getenv('CAMPUS_PASSWORD_D')
+login_d = os.getenv('LOGIN_D')
 
 login_payload = {
     'username': username,
@@ -47,6 +51,9 @@ def descarga_informe(login, file_link, file_name, login_info):
 for key in dict:
     descarga_informe(dict[key]['login'], dict[key]['file'], dict[key]['output'], login_payload)
 
+#nuevo cliente
+for key in dict_dv:
+    descarga_informe(login_d, dict_dv[key]['file'], dict_dv[key]['output'], login_payload_d)
 #csv a xlsx
 for csvfile in glob.glob(os.path.join('.','*.csv')):
     try:
@@ -101,10 +108,10 @@ dir = os.getcwd()
 
 dir_files = os.listdir(dir)
 
-for file in dir_files:
-    if file.endswith(".csv"):
-        ruta_completa = os.path.join(dir, file)
-        os.remove(ruta_completa)
-        print(f"Archivo {file} eliminado correctamente.")
+# for file in dir_files:
+#     if file.endswith(".csv"):
+#         ruta_completa = os.path.join(dir, file)
+#         os.remove(ruta_completa)
+#         print(f"Archivo {file} eliminado correctamente.")
 
 merge(dfs)
