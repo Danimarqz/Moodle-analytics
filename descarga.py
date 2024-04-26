@@ -6,7 +6,6 @@ import json
 import pandas as pd
 from dotenv import load_dotenv
 from merge import merge
-from separate import separate
 
 # URLs
 load_dotenv()
@@ -16,9 +15,13 @@ with open('onlysavia.json') as f:
 dfs = {}
 username = os.getenv('CAMPUS_USERNAME')
 password = os.getenv('CAMPUS_PASSWORD')
+
 archivo_destino = 'Savia Centros.xlsx'
+
 json_centros = 'nombre_centros.json'
 output_directory = "centros"
+if not os.path.exists(output_directory):
+    os.makedirs(output_directory)
 
 login_payload = {
     'username': username,
@@ -78,5 +81,4 @@ for file in dir_files:
         os.remove(ruta_completa)
         print(f"Archivo {file} eliminado correctamente.")
 
-merge(dfs, archivo_destino)
-separate(output_directory, json_centros, archivo_destino)
+merge(dfs, os.path.join(output_directory, archivo_destino))
