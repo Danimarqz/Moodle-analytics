@@ -1,7 +1,7 @@
 import pandas as pd
 
 def merge(dfs):
-    archivo_destino = 'Informe completo.xlsx'
+    archivo_destino = 'Savia Centros.xlsx'
 
     with pd.ExcelWriter(archivo_destino, engine='xlsxwriter') as writer:
         for name, df in dfs.items():
