@@ -6,6 +6,7 @@ import json
 import pandas as pd
 from dotenv import load_dotenv
 from merge import merge
+from separate import separate
 
 # URLs
 load_dotenv()
@@ -75,3 +76,4 @@ for file in dir_files:
         print(f"Archivo {file} eliminado correctamente.")
 
 merge(dfs)
+separate()
