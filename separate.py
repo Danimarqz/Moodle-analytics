@@ -3,17 +3,14 @@ import os
 import pandas as pd
 from datetime import datetime
 
-def separate():
-    with open('nombre_centros.json') as f:
+def separate(output_directory, json, archivo_objetivo):
+    with open() as f:
         nombreCentros = json.load(f)
-
-
-    output_directory = "centros"
     current_date = datetime.now().strftime("%d_%m")
 
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
-    excel_file = pd.ExcelFile('Informe completo.xlsx')
+    excel_file = pd.ExcelFile(archivo_objetivo)
 
     for sheet_name in excel_file.sheet_names:
         df = pd.read_excel(excel_file, sheet_name)
