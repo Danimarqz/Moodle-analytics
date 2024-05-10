@@ -12,7 +12,7 @@ current_date = datetime.now().strftime("%d_%m")
 
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
-excel_file = pd.ExcelFile('Informe completo.xlsx')
+excel_file = pd.ExcelFile('Savia Centros.xlsx')
 
 for sheet_name in excel_file.sheet_names:
     df = pd.read_excel(excel_file, sheet_name)
