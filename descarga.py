@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Leer el archivo JSON con la información de los centros
-with open('codigo_centros.json') as f:
+with open('nombre_centros.json') as f:
     nombreCentros = json.load(f)
 
 # Normalizar los nombres de los centros (eliminar ceros a la izquierda)
@@ -65,8 +65,8 @@ for csvfile in glob.glob(os.path.join('.', '*.csv')):
         if 'Fecha fin' in df.columns:
             df['Fecha fin'] = pd.to_datetime(df['Fecha fin'], format='%d/%m/%Y', errors='coerce')
             today = datetime.now().date()
-            valid_date_mask = ~df['Fecha fin'].isna() & (df['Fecha fin'].dt.date >= today)
-            filtered_df = df[valid_date_mask].copy()  # Hacer una copia explícita del DataFrame filtrado
+            # valid_date_mask = ~df['Fecha fin'].isna() & (df['Fecha fin'].dt.date >= today)
+            filtered_df = df  # Hacer una copia explícita del DataFrame filtrado
             filtered_df.loc[:, 'Fecha fin'] = filtered_df['Fecha fin'].dt.strftime('%d/%m/%Y')
             filtered_df.loc[:, 'Nota Examen final'] = filtered_df['Nota Examen final'].str.replace('%', '').astype(float)
             name = os.path.splitext(os.path.basename(csvfile))[0]
