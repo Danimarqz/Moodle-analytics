@@ -20,6 +20,7 @@ nombreCentros_normalized = {k.lstrip('0'): v for k, v in nombreCentros.items()}
 with open('onlysavia.json') as f:
     dict = json.load(f)
 
+
 # Configuración inicial
 dfs = {}
 username = os.getenv('CAMPUS_USERNAME')
@@ -63,13 +64,15 @@ for csvfile in glob.glob(os.path.join('.', '*.csv')):
     try:
         df = pd.read_csv(csvfile, encoding='utf8')
         if 'Fecha fin' in df.columns:
-            df['Fecha fin'] = pd.to_datetime(df['Fecha fin'], format='%d/%m/%Y', errors='coerce')
-            today = datetime.now().date()
+            df['Fecha fin'] = pd.to_datetime(df['Fecha fin'], dayfirst=True, errors='coerce')
+            df['Centro'] = df['Centro'].astype(str).str.split('.').str[0] #Pasar los centros a string
+            # today = datetime.now().date()
             # valid_date_mask = ~df['Fecha fin'].isna() & (df['Fecha fin'].dt.date >= today)
             filtered_df = df[df['F_BAJA'].isna()]  # filtra el df para que se muestren los valores nulos
-            filtered_df.loc[:, 'Fecha fin'] = filtered_df['Fecha fin'].dt.strftime('%d/%m/%Y')
+            # filtered_df.loc[:, 'Fecha fin'] = filtered_df['Fecha fin'].dt.strftime('%d/%m/%Y')
             filtered_df.loc[:, 'Nota Examen final'] = filtered_df['Nota Examen final'].str.replace('%', '').astype(float)
             name = os.path.splitext(os.path.basename(csvfile))[0]
+            
             grupos = filtered_df.groupby('Centro')
 
             for centro, grupo in grupos:
