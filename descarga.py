@@ -65,12 +65,16 @@ for csvfile in glob.glob(os.path.join('.', '*.csv')):
         df = pd.read_csv(csvfile, encoding='utf8')
         if 'Fecha fin' in df.columns:
             df['Fecha fin'] = pd.to_datetime(df['Fecha fin'], dayfirst=True, errors='coerce')
-            df['Centro'] = df['Centro'].astype(str).str.split('.').str[0] #Pasar los centros a string
-            filtered_df = df[df['F_BAJA'].isna()]  # filtra el df para que se muestren los valores nulos
-            filtered_df.loc[:, 'Nota Examen final'] = filtered_df['Nota Examen final'].str.replace('%', '').astype(float)
+            date = datetime(2024, 1, 1).date()
+            print(date)
+            valid_date_mask = ~df['Fecha fin'].isna() & (df['Fecha fin'].dt.date >= date)
+            filtered_df = df[valid_date_mask].copy()
+            filtered_df['Centro'] = filtered_df['Centro'].astype(str).str.split('.').str[0] #Pasar los centros a string
+            active_filtered_df = filtered_df[filtered_df['F_BAJA'].isna()]  # filtra el df para que se muestren los valores nulos
+            active_filtered_df.loc[:, 'Nota Examen final'] = active_filtered_df['Nota Examen final'].str.replace('%', '').astype(float)
             name = os.path.splitext(os.path.basename(csvfile))[0]
             
-            grupos = filtered_df.groupby('Centro')
+            grupos = active_filtered_df.groupby('Centro')
 
             for centro, grupo in grupos:
                 # Quita los 0
