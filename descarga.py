@@ -46,13 +46,12 @@ for csvfile in glob.glob(os.path.join('.','*.csv')):
     try:
         df = pd.read_csv(csvfile, encoding='utf8')
         if 'Fecha fin' in df.columns:
-            df['Fecha fin'] = pd.to_datetime(df['Fecha fin'], format='%d/%m/%Y', errors='coerce')
-            df['Fecha inicio'] = pd.to_datetime(df['Fecha inicio'], format='%d/%m/%Y', errors='coerce')
+            df['Fecha fin'] = pd.to_datetime(df['Fecha fin'], format='%d/%m/%Y', dayfirst=True, errors='coerce')
+            df['Fecha inicio'] = pd.to_datetime(df['Fecha inicio'], format='%d/%m/%Y', dayfirst=True, errors='coerce')
             today = datetime.now().date()
             valid_date_mask = ~df['Fecha fin'].isna() & (df['Fecha fin'].dt.date >= today)
             valid_date_mask_inicio = ~df['Fecha inicio'].isna() & (df['Fecha inicio'].dt.date <= today)
             filtered_df = df[valid_date_mask & valid_date_mask_inicio]
-            filtered_df.loc[:,'Fecha fin'] = filtered_df['Fecha fin'].dt.strftime('%d/%m/%Y')
             filtered_df.loc[:,'Nota Examen final'] = filtered_df['Nota Examen final'].str.replace('%', '').astype(float)
             name = os.path.splitext(os.path.basename(csvfile))[0]
             # calculations = {
