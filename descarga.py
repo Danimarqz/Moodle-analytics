@@ -7,6 +7,7 @@ import glob
 import json
 import pandas as pd
 from dotenv import load_dotenv
+from merge import merge
 
 logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
@@ -111,11 +112,4 @@ for file in dir_files:
         os.remove(ruta_completa)
         print(f"Archivo {file} eliminado correctamente.")
 
-def merge(dfs):
-    archivo_destino = os.path.join(os.path.dirname(sys.executable), 'Informe completo.xlsx')
-
-    with pd.ExcelWriter(archivo_destino, engine='xlsxwriter') as writer:
-        for name, df in dfs.items():
-            print(name)
-            df.to_excel(writer, sheet_name=name, index=False)
 merge(dfs)
