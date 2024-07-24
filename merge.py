@@ -1,7 +1,9 @@
+import os
+import sys
 import pandas as pd
 
 def merge(dfs):
-    archivo_destino = 'Informe completo.xlsx'
+    archivo_destino = os.path.join(os.path.dirname(sys.executable), 'Informe completo.xlsx')
 
     with pd.ExcelWriter(archivo_destino, engine='xlsxwriter') as writer:
         for name, df in dfs.items():

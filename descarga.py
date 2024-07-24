@@ -1,15 +1,26 @@
 from datetime import datetime
+import logging
+import sys
 import requests
 import os
 import glob
 import json
 import pandas as pd
 from dotenv import load_dotenv
-from merge import merge
+
+logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+
+def resource_path(relative_path):
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 # URLs
-load_dotenv()
-with open('campus.json') as f:
+load_dotenv(resource_path('.env'))
+with open(resource_path('campus.json')) as f:
     dict = json.load(f)
 
 dfs = {}
@@ -42,7 +53,7 @@ for key in dict:
     descarga_informe(dict[key]['login'], dict[key]['file'], dict[key]['output'])
 
 #csv a xlsx
-for csvfile in glob.glob(os.path.join('.','*.csv')):
+for csvfile in glob.glob(os.path.join(os.path.dirname(sys.executable), '*.csv')):
     try:
         df = pd.read_csv(csvfile, encoding='utf8')
         if 'Fecha fin' in df.columns:
@@ -100,4 +111,11 @@ for file in dir_files:
         os.remove(ruta_completa)
         print(f"Archivo {file} eliminado correctamente.")
 
+def merge(dfs):
+    archivo_destino = os.path.join(os.path.dirname(sys.executable), 'Informe completo.xlsx')
+
+    with pd.ExcelWriter(archivo_destino, engine='xlsxwriter') as writer:
+        for name, df in dfs.items():
+            print(name)
+            df.to_excel(writer, sheet_name=name, index=False)
 merge(dfs)
