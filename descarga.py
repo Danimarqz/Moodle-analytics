@@ -1,32 +1,75 @@
-from datetime import datetime
-import requests
 import os
-import glob
 import json
+import requests
 import pandas as pd
+import glob
+import logging
+from datetime import datetime
 from dotenv import load_dotenv
+import sys
 
-# Cargar variables de entorno
-load_dotenv()
+logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
-# Leer el archivo JSON con la información de los centros
-with open('nombre_centros.json') as f:
-    nombreCentros = json.load(f)
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
-# Normalizar los nombres de los centros (eliminar ceros a la izquierda)
+def separar():
+    try:
+        with open(resource_path('nombre_centros.json')) as f:
+            nombreCentros = json.load(f)
+    except Exception as e:
+        logging.error(f"Error loading nombre_centros.json: {e}")
+
+    output_directory = os.path.join(os.path.dirname(sys.executable), "centros")
+    current_date = datetime.now().strftime("%d_%m")
+
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    
+    excel_file_path = archivo_destino
+    try:
+        excel_file = pd.ExcelFile(excel_file_path)
+    except Exception as e:
+        logging.error(f"Error loading {excel_file_path}: {e}")
+
+    for sheet_name in excel_file.sheet_names:
+        df = pd.read_excel(excel_file, sheet_name)
+        sheet_name_normalized = sheet_name.lstrip('0')
+        nombre = nombreCentros.get(sheet_name_normalized)
+
+        if nombre:
+            # Write the DataFrame to a separate Excel file
+            output_file = os.path.join(output_directory, f"{sheet_name}_{nombre}_{current_date}.xlsx")
+            df.to_excel(output_file, index=False)
+            logging.info(f"Saved {sheet_name} to {output_file}")
+        else:
+            logging.warning(f"Skipping {sheet_name} because no code found in mapping.")
+
+load_dotenv(resource_path('.env'))
+
+try:
+    with open(resource_path('nombre_centros.json')) as f:
+        nombreCentros = json.load(f)
+except Exception as e:
+    logging.error(f"Error loading nombre_centros.json: {e}")
+
 nombreCentros_normalized = {k.lstrip('0'): v for k, v in nombreCentros.items()}
 
-# Leer el archivo JSON con las URLs de los informes
-with open('onlysavia.json') as f:
-    dict = json.load(f)
+try:
+    with open(resource_path('onlysavia.json')) as f:
+        dict = json.load(f)
+except Exception as e:
+    logging.error(f"Error loading onlysavia.json: {e}")
 
-
-# Configuración inicial
 dfs = {}
 username = os.getenv('CAMPUS_USERNAME')
 password = os.getenv('CAMPUS_PASSWORD')
-archivo_destino = 'Savia Centros.xlsx'
-output_directory = os.getcwd()
+archivo_destino = os.path.join(os.path.dirname(sys.executable), 'Savia Centros.xlsx')
+output_directory = os.path.dirname(sys.executable)
 
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
@@ -41,32 +84,35 @@ def descarga_informe(login, file_link, file_name):
     login_response = session.post(login, data=login_payload)
 
     if 'Invalid login' in login_response.text:
-        print('Login failed. Invalid username or password.')
+        logging.error('Login failed. Invalid username or password.')
     else:
-        print('Login successful. Initiating file download...' + file_name)
+        logging.info('Login successful. Initiating file download...' + file_name)
         try:
             file_response = session.get(file_link)
             with open(file_name, 'wb') as file:
                 file.write(file_response.content)
-            print('File downloaded successfully.')
+            logging.info('File downloaded successfully.')
         except Exception as e:
-            print(f"Error downloading file {file_name}: {e}")
+            logging.error(f"Error downloading file {file_name}: {e}")
         finally:
             session.close()
 
 for key in dict:
-    descarga_informe(dict[key]['login'], dict[key]['file'], dict[key]['output'])
+    descarga_informe(dict[key]['login'], dict[key]['file'], resource_path(dict[key]['output']))
 
 # Procesar los archivos CSV y convertirlos en un Excel con hojas separadas por centro
-writer = pd.ExcelWriter(os.path.join(output_directory, archivo_destino), engine='xlsxwriter')
+try:
+    writer = pd.ExcelWriter(os.path.join(output_directory, 'Savia Centros.xlsx'), engine='xlsxwriter')
+except Exception as e:
+    logging.error(f"Error creating Excel writer: {e}")
 
-for csvfile in glob.glob(os.path.join('.', '*.csv')):
+for csvfile in glob.glob(resource_path('*.csv')):
     try:
         df = pd.read_csv(csvfile, encoding='utf8')
         if 'Fecha fin' in df.columns:
             df['Fecha fin'] = pd.to_datetime(df['Fecha fin'], dayfirst=True, errors='coerce')
             date = datetime(2024, 1, 1).date()
-            print(date)
+            logging.info(f"Date filter set to: {date}")
             valid_date_mask = ~df['Fecha fin'].isna() & (df['Fecha fin'].dt.date >= date)
             filtered_df = df[valid_date_mask].copy()
             filtered_df['Centro'] = filtered_df['Centro'].astype(str).str.split('.').str[0] #Pasar los centros a string
@@ -90,18 +136,29 @@ for csvfile in glob.glob(os.path.join('.', '*.csv')):
             name = os.path.splitext(os.path.basename(csvfile))[0]
             dfs[name] = df
     except Exception as e:
-        print(f"Error processing {csvfile}: {e}")
+        logging.error(f"Error processing {csvfile}: {e}")
 
 # Guardar cada DataFrame en una hoja separada del archivo Excel
 for centro, df in dfs.items():
-    df.to_excel(writer, sheet_name=centro[:31], index=False)
+    try:
+        df.to_excel(writer, sheet_name=centro[:31], index=False)
+    except Exception as e:
+        logging.error(f"Error writing Excel sheet {centro}: {e}")
 
-writer.close()  # Usar close() en lugar de save()
+try:
+    writer.close()  # Usar close() en lugar de save()
+except Exception as e:
+    logging.error(f"Error closing Excel writer: {e}")
 
 # Eliminar archivos CSV
 dir_files = os.listdir(os.getcwd())
 
 for file in dir_files:
     if file.endswith(".csv"):
-        os.remove(file)
-        print(f"Archivo {file} eliminado correctamente.")
+        try:
+            os.remove(file)
+            logging.info(f"Archivo {file} eliminado correctamente.")
+        except Exception as e:
+            logging.error(f"Error removing file {file}: {e}")
+
+separar()
