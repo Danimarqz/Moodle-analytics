@@ -34,21 +34,17 @@ login_payload = {
 }
 def descarga_informe(login, file_link, file_name):
     session = requests.Session()
-    login_response = session.post(login, data=login_payload)
+    session.post(login, data=login_payload)
 
-    if 'Invalid login' in login_response.text:
-        print('Login failed. Invalid username or password.')
-    else:
-        print('Login successful. Initiating file download...' + file_name)
-        try:
-            file_response = session.get(file_link)
-        except:
-            print(file_response.status_code)
+    try:
+        file_response = session.get(file_link)
+    except:
+        print(file_response.status_code)
 
-        with open(file_name, 'wb') as file:
-            file.write(file_response.content)
-        print('File downloaded successfully.')
-        session.close()
+    with open(file_name, 'wb') as file:
+        file.write(file_response.content)
+    print('File downloaded successfully.')
+    session.close()
 
 for key in dict:
     descarga_informe(dict[key]['login'], dict[key]['file'], dict[key]['output'])
